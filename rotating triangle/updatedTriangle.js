@@ -31,7 +31,7 @@ const vsSource = `
     varying vec3 vCol;
     uniform mat4 rotation;
     void main(){
-        gl_Position = rotation * vec4(pos, 1.0) + vec4(shift, 0.0, 0.0, 1.0);
+        gl_Position = rotation * vec4(pos, 1.0);
         vCol = col;
     }`;
 
@@ -70,35 +70,19 @@ gl.useProgram(program);
 const uniLoc = gl.getUniformLocation(program, `rotation`);
 const shiftLoc = gl.getUniformLocation(program, `shift`);
 
-let shift = 0.03;
+let shift = 0.01;
 let myshift = 0;
 let move = 0;
 let val;
-start_x = -1;
-start_y = -1;
-start_z = -1;
-
+let model;
 draw();
 
 function draw(){
     gl.clear(gl.COLOR_BUFFER_BIT);
     myshift += shift;
-    if(start_x == 1){
-        val = xRot(myshift);
-        //gl.uniformMatrix4fv(uniLoc, false, val);
-    }
-
-    else if(start_y == 1){
-        val = yRot(myshift);
-        //gl.uniformMatrix4fv(uniLoc, false, val);
-    }
-    else if(start_z == 1){
-        val = zRot(myshift);
-        
-    }
+    model = translate(myshift,0.0,0.0);
+    gl.uniformMatrix4fv(uniLoc, false, model);
     
-    
-    gl.uniformMatrix4fv(uniLoc, false, val);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     window.requestAnimationFrame(draw);
 }
@@ -143,18 +127,16 @@ function zRot(Rads){
     ]);
 }
 
-
-function xSpin(){
-    start_x *= -1;
+function translate(tx, ty, tz){
+    
+    return new Float32Array([
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        tx, ty, tz, 1.0
+    ]);
 }
 
-function ySpin(){
-    start_y *= -1;
-}
-
-function zSpin(){
-    start_z *= -1;
-}
 
 function moveRight(){
     move += shift;
