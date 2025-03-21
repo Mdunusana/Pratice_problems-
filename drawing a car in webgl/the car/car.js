@@ -1,90 +1,75 @@
-const canvas = document.getElementById("myCanvas");
-const gl = canvas.getContext("webgl");
+const canvas = document.querySelector(`canvas`);
+const gl= canvas.getContext(`webgl`);
+gl.clearColor( 0.1,0.0,0.0,0.1);
+
+gl.clear( gl.COLOR_BUFFER_BIT);
+
+// PETTING THE POINTS FOR MY TRAINGEL 
+const points = new Float32Array([ -0.5,-0.5, -0.5,0.5, 0.5,0.5]);
+
+const color = new Float32Array( [ 1,0,0,1,  0,1,0,1,  0,0,1,1]);
+
+// crearting buffers for my code 
+const buffer = gl.createBuffer();
+gl.bindBuffer( gl.ARRAY_BUFFER, buffer);
+gl.bufferData( gl.ARRAY_BUFFER,points,gl.STATIC_DRAW);
+
+const cbuffer= gl.createBuffer();
+gl.bindBuffer( gl.ARRAY_BUFFER,cbuffer);
+gl.bufferData( gl.ARRAY_BUFFER,color,gl.STATIC_DRAW);
+
+/// creating ths shders for my code 
+const vsSource=`  
+attribute vec2 pos;
+attribute vec4 col;
+varying vec4 vCol;
+void main()
+{
+gl_Position=vec4( pos ,0.0,1.0);
+vCol= col;
+}`;
+const fsSource = `   
+ precision mediump float;
+ varying  vec4 vCol;
+
+void main()
+{
+gl_FragColor= vCol;
+
+}`;
+ // creating shders for my sources 
+ function complileShader( gl,source,type){
+ const vertexshader= gl.createShader(gl.VERTEX_SHADER);
+ gl.shaderSource(vertexshader,vsSource );
+
+ gl.compileShader( vertexshader);
+
+  const fragmentshader= gl.createShader( gl.FRAGMENT_SHADER);
+  gl.shaderSource(fragmentshader,fsSource);
+  gl.compileShader( fragmentshader);
+
+
+  // craeting the program for my shaders 
+
+  const program= gl.createProgram();
+  gl.attachShader( program,vertexshader);
+  gl.attachShader( program,fragmentshader);
+  gl.linkProgram( program);
+
+  gl.bindBuffer( gl.ARRAY_BUFFER,buffer);
+  const positionlocation = gl.getAttribLocation(program, "pos");
+
+  gl.enableVertexAttribArray( positionlocation);
+  gl.vertexAttribPointer( positionlocation,3, gl.FLOAT,false,0,0);
+
+  gl.bindBuffer( gl.ARRAY_BUFFER,cbuffer);
+  const colorLocation = gl.getAttribLocation(program, "col");
+
+  gl.enableVertexAttribArray( colorLocation);
+  gl.vertexAttribPointer( colorLocation,4,gl.FLOAT,false,0,0);
+  gl.useProgram(program);
+ gl.drawArrays( gl.TRIANGLES,0,3);
 
 
 
-// Clear the canvas
-gl.clearColor(0.9, 0.9, 0.9, 1.0);
-gl.clear(gl.COLOR_BUFFER_BIT);
 
-// Define the vertices for the car (body, wheels, etc.)
-const carVertices = new Float32Array([
-    // Car body (rectangle)
-    -0.5, -0.2,  // Bottom-left
-    0.5, -0.2,   // Bottom-right
-
-    0.5, -0.2,   // Bottom-right
-    0.5, 0.2,    // Top-right
-
-    0.5, 0.2,    // Top-right
-    -0.5, 0.2,   // Top-left
-
-    -0.5, 0.2,   // Top-left
-    -0.5, -0.2,  // Bottom-left
-
-    // Wheels (circles approximated with lines)
-    -0.3, -0.3,  // Left wheel (bottom-left)
-    -0.2, -0.3,  // Left wheel (bottom-right)
-
-    0.3, -0.3,   // Right wheel (bottom-left)
-    0.2, -0.3,   // Right wheel (bottom-right)
-]);
-
-// Create and bind the position buffer
-const positionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, carVertices, gl.STATIC_DRAW);
-
-// Vertex shader source
-const vsSource = `
-    attribute vec2 pos;
-
-    void main() {
-        gl_Position = vec4(pos, 0.0, 1.0);
-    }
-`;
-
-// Fragment shader source
-const fsSource = `
-    precision mediump float;
-
-    void main() {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); // Black color for the lines
-    }
-`;
-
-// Create and compile the vertex shader
-const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-gl.shaderSource(vertexShader, vsSource);
-gl.compileShader(vertexShader);
-if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-    console.error("Vertex shader compilation failed:", gl.getShaderInfoLog(vertexShader));
-}
-
-// Create and compile the fragment shader
-const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-gl.shaderSource(fragmentShader, fsSource);
-gl.compileShader(fragmentShader);
-if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-    console.error("Fragment shader compilation failed:", gl.getShaderInfoLog(fragmentShader));
-}
-
-// Create and link the shader program
-const program = gl.createProgram();
-gl.attachShader(program, vertexShader);
-gl.attachShader(program, fragmentShader);
-gl.linkProgram(program);
-if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error("Program linking failed:", gl.getProgramInfoLog(program));
-}
-gl.useProgram(program);
-
-// Bind the position buffer and set up the attribute
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-const positionLocation = gl.getAttribLocation(program, "pos");
-gl.enableVertexAttribArray(positionLocation);
-gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-// Draw the car using lines
-gl.clear(gl.COLOR_BUFFER_BIT);
-gl.drawArrays(gl.LINES, 0, carVertices.length / 2);
